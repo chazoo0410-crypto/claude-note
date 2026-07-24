@@ -23,7 +23,19 @@
       "Bash(echo \"exit code: $?\")",
       "Read(//tmp/**)",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git config *)",
+      "Bash(git -c user.name=chazoo0410 -c user.email=chazoo0410@gmail.com commit -m ' *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(python3 -c \"import uuid; print\\(uuid.uuid4\\(\\)\\); print\\(uuid.uuid4\\(\\)\\)\")",
+      "Bash(python -c \"import uuid; print\\(uuid.uuid4\\(\\)\\); print\\(uuid.uuid4\\(\\)\\)\")",
+      "PowerShell([guid]::NewGuid\\(\\).ToString\\(\\); [guid]::NewGuid\\(\\).ToString\\(\\))",
+      "Bash(gh --version)",
+      "Bash(env)",
+      "Bash(git credential *)",
+      "Bash(git checkout *)"
     ]
   }
 }
