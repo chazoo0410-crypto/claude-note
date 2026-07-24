@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"/c/Users/chazo/OneDrive/Desktop/note-ai/.claude/skills/note-trend-writer/scripts\" \"/c/Users/chazo/OneDrive/Desktop/note-ai/output\" *)",
+      "Bash(python .claude/skills/note-trend-writer/scripts/fetch_trends.py --top 3 --sample-size 2)",
+      "PowerShell(python --version)",
+      "PowerShell(py --version)",
+      "PowerShell(Get-Command python -ErrorAction SilentlyContinue)",
+      "PowerShell(& \"C:\\\\Users\\\\chazo\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\python.exe\" --version 2>&1)",
+      "PowerShell(Get-Command node -ErrorAction SilentlyContinue)",
+      "PowerShell(node --version 2>&1)",
+      "PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\chazo\\\\OneDrive\\\\Desktop\\\\note-ai\\\\.claude\\\\skills\\\\note-trend-writer\\\\scripts\\\\fetch_trends.ps1\" -Top 3 -SampleSize 2)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File \".claude/skills/note-trend-writer/scripts/fetch_trends.ps1\" -Top 5 -SampleSize 5)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '.claude/skills/note-trend-writer/scripts/fetch_trends.ps1' -Top 5 -SampleSize 5 | Out-File -FilePath 'C:\\\\Users\\\\chazo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-chazo-OneDrive-Desktop-note-ai\\\\ada36842-40ca-4d3c-a659-58caf2e42c2a\\\\scratchpad\\\\trends.json' -Encoding utf8\")",
+      "Skill(schedule)",
+      "Skill(schedule:*)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '.claude/skills/note-trend-writer/scripts/fetch_trends.ps1' -Top 1 -SampleSize 10 | Out-File -FilePath 'C:\\\\Users\\\\chazo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-chazo-OneDrive-Desktop-note-ai\\\\ada36842-40ca-4d3c-a659-58caf2e42c2a\\\\scratchpad\\\\business_full.json' -Encoding utf8\")",
+      "Bash(gh auth *)",
+      "Bash(gh api *)",
+      "PowerShell(gh auth status 2>&1)",
+      "PowerShell(gh api user --jq .login 2>&1)",
+      "Bash(git ls-remote *)",
+      "Bash(echo \"exit code: $?\")",
+      "Read(//tmp/**)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
