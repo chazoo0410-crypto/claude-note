@@ -35,7 +35,17 @@
       "Bash(gh --version)",
       "Bash(env)",
       "Bash(git credential *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '.claude/skills/note-trend-writer/scripts/fetch_trends.ps1' -Top 5 -SampleSize 5 | Out-File -FilePath 'C:\\\\Users\\\\chazo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-chazo-OneDrive-Desktop-note-ai\\\\ada36842-40ca-4d3c-a659-58caf2e42c2a\\\\scratchpad\\\\trends2.json' -Encoding utf8\")",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(curl -s -o /dev/null -w 'HTTP_STATUS:%{http_code}\\\\n' https://generativelanguage.googleapis.com/v1beta/models?key=__CMDSUB_OUTPUT__)",
+      "Bash(cd \"C:/Users/chazo/OneDrive/Desktop/note-ai\" && rm -f output/images/_test_ascii.png .claude/skills/note-trend-writer/scripts/_debug_test.ps1 .claude/skills/note-trend-writer/scripts/_debug_test2.ps1 debug_trace.txt debug_out.txt && ls .claude/skills/note-trend-writer/scripts/ && git status --short)",
+      "Bash(curl -s -X POST https://api.openai.com/v1/images/generations -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"model\":\"gpt-image-1\",\"prompt\":\"a tiny minimal test icon, flat vector style, navy blue\",\"size\":\"1024x1024\",\"n\":1}' -o C:/Users/chazo/AppData/Local/Temp/claude/C--Users-chazo-OneDrive-Desktop-note-ai/ada36842-40ca-4d3c-a659-58caf2e42c2a/scratchpad/openai_test_resp.json)",
+      "Bash(git check-ignore *)",
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "Read(//c/Users/chazo/AppData/Local/Microsoft/WindowsApps/**)"
     ]
   }
 }
