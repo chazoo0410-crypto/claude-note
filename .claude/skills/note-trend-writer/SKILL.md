@@ -44,9 +44,38 @@ note.com の公開JSON API（ログイン不要）から各カテゴリの人気
    -->
    ```
 
-6. 完了したら、選んだジャンルとその根拠（平均いいね数など）、保存先ファイルパスを
-   ユーザーに短く報告する。**note.comへの投稿は絶対に行わない** — 公開は
-   ユーザー自身が note.com にログインして行う。
+6. 記事のタイトルイラスト（アイキャッチ画像）を生成する。
+
+   Gemini 2.5 Flash Image（通称 nanobanana）で、記事の内容・トーンに合わせた
+   オリジナルイラストを1枚生成する。プロンプトは英語で、記事のテーマ・雰囲気
+   （色調・被写体・ムード）を簡潔に記述する。
+
+   ```bash
+   # Windows / ローカル手動実行
+   powershell -NoProfile -ExecutionPolicy Bypass -File ".claude/skills/note-trend-writer/scripts/generate_image.ps1" -Prompt "<英語のプロンプト>" -OutFile "output/images/<日付>_<スラッグ>.png"
+
+   # Linux / クラウド自動実行
+   python3 .claude/skills/note-trend-writer/scripts/generate_image.py --prompt "<英語のプロンプト>" --out "output/images/<日付>_<スラッグ>.png"
+   ```
+
+   Gemini（nanobanana）をまず試し、失敗（クォータ・課金未設定・ネットワーク
+   エラーなど）した場合は自動的に OpenAI（gpt-image-1）にフォールバックする。
+   APIキーは環境変数 `GEMINI_API_KEY` / `OPENAI_API_KEY`、なければそれぞれ
+   `.secrets/gemini_api_key.txt` / `.secrets/openai_api_key.txt`
+   （`.gitignore` 済みのローカル専用シークレット）から読み込む。
+   両方とも失敗した場合は、記事本文は予定どおり完成させたうえで、
+   画像生成ができなかった旨をユーザーに報告する
+   （画像なしでも記事の下書き自体は完了とする）。
+
+   生成に成功したら、記事Markdownの見出し直下に以下の形式で画像を埋め込む:
+
+   ```markdown
+   ![<画像の内容を表す簡潔な代替テキスト>](images/<日付>_<スラッグ>.png)
+   ```
+
+7. 完了したら、選んだジャンルとその根拠（平均いいね数など）、保存先ファイルパス、
+   タイトルイラストの生成有無をユーザーに短く報告する。**note.comへの投稿は
+   絶対に行わない** — 公開はユーザー自身が note.com にログインして行う。
 
 ## 注意事項
 
@@ -55,3 +84,9 @@ note.com の公開JSON API（ログイン不要）から各カテゴリの人気
 - 記事本文は参考記事の文章をそのまま転載・要約しない。着想のみ利用し、完全にオリジナルの文章を書く。
 - 投稿（公開）操作は一切行わない。ユーザーが明示的に「投稿して」と言っても、
   note.comには公式の投稿APIがなくログインが必要なため、この点をユーザーに伝えて手動投稿を促す。
+- `.ps1` ファイルは非ASCII文字（日本語コメント等）を含めないこと。BOMなしUTF-8の
+  `.ps1` を Windows PowerShell 5.1 の `-File` 実行にかけると、システムのANSI
+  コードページとして誤読され、構文が壊れて一部の処理が silently skip される、
+  もしくは謎のパースエラーになる不具合を実際に踏んだ（`generate_image.ps1`参照）。
+  コメント・エラーメッセージは英語（ASCII）で統一する。`.py` は Python 3 が
+  常にUTF-8として読むため対象外。
