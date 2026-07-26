@@ -14,14 +14,21 @@ note.com の公開JSON API（ログイン不要）から各カテゴリの人気
 1. トレンド取得スクリプトを実行する:
 
    ```bash
-   powershell -NoProfile -ExecutionPolicy Bypass -File ".claude/skills/note-trend-writer/scripts/fetch_trends.ps1" -Top 5 -SampleSize 5
+   powershell -NoProfile -ExecutionPolicy Bypass -File ".claude/skills/note-trend-writer/scripts/fetch_trends.ps1" -Top 10 -SampleSize 5
    ```
 
    出力は JSON で、`ranked_genres` に平均いいね数（`avg_like_count`）で
    ランキングされたジャンル一覧と、各ジャンルの参考記事（タイトル・いいね数・抜粋）が入っている。
+   note.com の全カテゴリ数は10なので、`-Top 10`（クラウド実行の
+   `fetch_trends.py` の場合は `--top 10`）を指定して、ランキング順位に
+   かかわらず「ビジネス」ジャンルが必ず結果に含まれるようにすること。
 
-2. 出力された JSON を読み、`ranked_genres[0]`（最も平均いいね数が高いジャンル）を
-   今回の執筆対象ジャンルとする。ユーザーが特定のジャンルを指定した場合はそちらを優先する。
+2. 執筆対象ジャンルは既定で **「ビジネス」に固定** する。出力された JSON の
+   `ranked_genres` の中から `category_name` が「ビジネス」の要素を探し、
+   その `avg_like_count` と `top_articles` を使う（ランキング1位かどうかは問わない）。
+   万一 JSON に「ビジネス」が含まれない場合は、その旨をユーザーに報告し、
+   `ranked_genres[0]` にフォールバックする。
+   ユーザーがその場で別のジャンルを明示的に指定した場合は、そちらを優先する。
 
 3. 選んだジャンルの `top_articles` を参考に、そのジャンルで読まれている
    トーン・切り口・テーマの傾向を把握する（コピーはしない。あくまで着想の参考）。

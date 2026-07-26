@@ -45,7 +45,13 @@
       "Bash(git check-ignore *)",
       "Bash(where python *)",
       "Bash(where python3 *)",
-      "Read(//c/Users/chazo/AppData/Local/Microsoft/WindowsApps/**)"
+      "Read(//c/Users/chazo/AppData/Local/Microsoft/WindowsApps/**)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git fetch *)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '.claude/skills/note-trend-writer/scripts/fetch_trends.ps1' -Top 5 -SampleSize 5 | Out-File -FilePath 'C:\\\\Users\\\\chazo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-chazo-OneDrive-Desktop-note-ai\\\\ada36842-40ca-4d3c-a659-58caf2e42c2a\\\\scratchpad\\\\trends3.json' -Encoding utf8\")",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '.claude/skills/note-trend-writer/scripts/fetch_trends.ps1' -Top 30 -SampleSize 1 | Out-File -FilePath 'C:\\\\Users\\\\chazo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-chazo-OneDrive-Desktop-note-ai\\\\ada36842-40ca-4d3c-a659-58caf2e42c2a\\\\scratchpad\\\\allcats.json' -Encoding utf8\")"
     ]
   }
 }
