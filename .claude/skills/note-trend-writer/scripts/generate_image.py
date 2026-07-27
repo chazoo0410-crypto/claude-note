@@ -27,6 +27,11 @@ GEMINI_ENDPOINT = (
 )
 OPENAI_ENDPOINT = "https://api.openai.com/v1/images/generations"
 
+# Fail fast instead of hanging a whole automated session when the network
+# path to a provider is blocked (e.g. a sandboxed cloud environment's proxy).
+GEMINI_TIMEOUT = 20
+OPENAI_TIMEOUT = 30
+
 
 def read_key(env_name, key_file):
     key = os.environ.get(env_name)
@@ -49,7 +54,7 @@ def try_gemini(prompt, api_key):
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urllib.request.urlopen(req, timeout=GEMINI_TIMEOUT) as resp:
         data = json.load(resp)
     parts = data["candidates"][0]["content"]["parts"]
     b64 = next((p["inlineData"]["data"] for p in parts if "inlineData" in p), None)
@@ -69,7 +74,7 @@ def try_openai(prompt, api_key):
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with urllib.request.urlopen(req, timeout=OPENAI_TIMEOUT) as resp:
         data = json.load(resp)
     b64 = data["data"][0]["b64_json"]
     return base64.b64decode(b64)
@@ -97,7 +102,7 @@ def main():
                 f.write(image_bytes)
             print(f"saved (gemini): {args.out} ({os.path.getsize(args.out)} bytes)")
             return
-        except (URLError, HTTPError, RuntimeError, KeyError, IndexError) as e:
+        except (URLError, HTTPError, RuntimeError, KeyError, IndexError, OSError) as e:
             detail = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else str(e)
             errors.append(f"gemini: {detail}")
     else:
@@ -111,7 +116,7 @@ def main():
                 f.write(image_bytes)
             print(f"saved (openai fallback): {args.out} ({os.path.getsize(args.out)} bytes)")
             return
-        except (URLError, HTTPError, RuntimeError, KeyError, IndexError) as e:
+        except (URLError, HTTPError, RuntimeError, KeyError, IndexError, OSError) as e:
             detail = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else str(e)
             errors.append(f"openai: {detail}")
     else:

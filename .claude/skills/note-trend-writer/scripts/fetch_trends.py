@@ -27,9 +27,12 @@ HEADERS = {
 }
 
 
+REQUEST_TIMEOUT = 8  # seconds; fail fast instead of hanging a whole session
+
+
 def fetch_json(url: str):
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
         return json.load(resp)
 
 
@@ -61,17 +64,26 @@ def main():
 
     try:
         categories = get_categories()
-    except (URLError, HTTPError) as e:
+    except (URLError, HTTPError, OSError) as e:
         print(json.dumps({"error": f"カテゴリ一覧の取得に失敗しました: {e}"}, ensure_ascii=False))
         sys.exit(1)
 
     results = []
+    consecutive_failures = 0
     for cat in categories:
         eng = cat["engName"]
         try:
             notes = get_category_notes(eng)
-        except (URLError, HTTPError) as e:
+            consecutive_failures = 0
+        except (URLError, HTTPError, OSError) as e:
             print(f"warning: {cat['name']} の取得に失敗: {e}", file=sys.stderr)
+            consecutive_failures += 1
+            if consecutive_failures >= 2:
+                print(
+                    "error: 2連続で取得に失敗したためネットワーク到達性の問題とみなして中断します",
+                    file=sys.stderr,
+                )
+                break
             continue
 
         avg_likes = score_category(notes)

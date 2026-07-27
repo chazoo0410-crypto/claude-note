@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  note.com の公開JSON API（ログイン不要）からカテゴリ別の人気記事を取得し、
-  最も勢いのあるジャンルをランキングしてJSONで出力する。
+  Fetch popular articles per category from note.com's public JSON API
+  (no login required), rank genres by average like count, and print JSON.
 
 .PARAMETER Top
-  上位いくつのジャンルを出力するか（既定 5）
+  How many top genres to output (default 5)
 
 .PARAMETER SampleSize
-  各ジャンルで参考にする記事数（既定 5）
+  How many sample articles per genre (default 5)
 
 .EXAMPLE
   pwsh -File fetch_trends.ps1 -Top 5 -SampleSize 5
@@ -23,10 +23,11 @@ $Headers = @{
     "Accept"     = "application/json"
     "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 }
+$TimeoutSec = 8
 
 function Get-JsonUtf8 {
     param([string]$Uri)
-    $resp = Invoke-WebRequest -Uri $Uri -Headers $Headers -Method Get -UseBasicParsing
+    $resp = Invoke-WebRequest -Uri $Uri -Headers $Headers -Method Get -UseBasicParsing -TimeoutSec $TimeoutSec
     $bytes = $resp.RawContentStream.ToArray()
     $text = [System.Text.Encoding]::UTF8.GetString($bytes)
     return $text | ConvertFrom-Json
@@ -36,20 +37,27 @@ try {
     $catsResp = Get-JsonUtf8 -Uri "$Base/api/v2/categories"
 }
 catch {
-    [PSCustomObject]@{ error = "カテゴリ一覧の取得に失敗しました: $_" } | ConvertTo-Json | Write-Output
+    [PSCustomObject]@{ error = "Failed to fetch category list: $_" } | ConvertTo-Json | Write-Output
     exit 1
 }
 
 $categories = $catsResp.data.categories | Where-Object { $_.engName }
 
 $results = @()
+$consecutiveFailures = 0
 foreach ($cat in $categories) {
     $eng = $cat.engName
     try {
         $catResp = Get-JsonUtf8 -Uri "$Base/api/v1/categories/$eng`?note_intro_only=true"
+        $consecutiveFailures = 0
     }
     catch {
-        Write-Warning "$($cat.name) の取得に失敗: $_"
+        Write-Warning "$($cat.name) fetch failed: $_"
+        $consecutiveFailures++
+        if ($consecutiveFailures -ge 2) {
+            Write-Warning "2 consecutive failures - assuming network reachability issue, aborting"
+            break
+        }
         continue
     }
 

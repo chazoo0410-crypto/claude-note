@@ -52,7 +52,7 @@ if ($geminiKey) {
             generationConfig = @{ responseModalities = @("IMAGE") }
         } | ConvertTo-Json -Depth 6
         $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=$geminiKey"
-        $resp = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Body $body
+        $resp = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Body $body -TimeoutSec 20
         $b64 = $resp.candidates[0].content.parts | Where-Object { $_.inlineData } | Select-Object -First 1 -ExpandProperty inlineData | Select-Object -ExpandProperty data
         if (-not $b64) { throw "no image data in Gemini response" }
         [IO.File]::WriteAllBytes($OutFile, [Convert]::FromBase64String($b64))
@@ -72,7 +72,7 @@ if ($openaiKey) {
     try {
         $body = @{ model = "gpt-image-1"; prompt = $Prompt; size = "1536x1024"; n = 1 } | ConvertTo-Json
         $headers = @{ Authorization = "Bearer $openaiKey" }
-        $resp = Invoke-RestMethod -Uri "https://api.openai.com/v1/images/generations" -Method Post -ContentType "application/json" -Headers $headers -Body $body
+        $resp = Invoke-RestMethod -Uri "https://api.openai.com/v1/images/generations" -Method Post -ContentType "application/json" -Headers $headers -Body $body -TimeoutSec 30
         $b64 = $resp.data[0].b64_json
         if (-not $b64) { throw "no image data in OpenAI response" }
         [IO.File]::WriteAllBytes($OutFile, [Convert]::FromBase64String($b64))
