@@ -55,7 +55,11 @@ note.com の公開JSON API（ログイン不要）から各カテゴリの人気
 
    Gemini 2.5 Flash Image（通称 nanobanana）で、記事の内容・トーンに合わせた
    オリジナルイラストを1枚生成する。プロンプトは英語で、記事のテーマ・雰囲気
-   （色調・被写体・ムード）を簡潔に記述する。
+   （色調・被写体・ムード）を簡潔に記述する。**絵柄は必ず日本のアニメ風
+   （anime style / anime illustration）を指定すること。** 実写・フォトリアル
+   調は避け、プロンプト末尾に "anime style illustration"
+   （やわらかい線画、セルシェーディング調、明るく親しみやすい配色など）
+   のような指定を加える。
 
    ```bash
    # Windows / ローカル手動実行
@@ -64,6 +68,10 @@ note.com の公開JSON API（ログイン不要）から各カテゴリの人気
    # Linux / クラウド自動実行
    python3 .claude/skills/note-trend-writer/scripts/generate_image.py --prompt "<英語のプロンプト>" --out "output/images/<日付>_<スラッグ>.png"
    ```
+
+   出力サイズは **1280×670px（note.comの標準アイキャッチ画像サイズ）に固定**する。
+   スクリプトが自動的に画像を拡大・中央クロップしてこのサイズちょうどに
+   仕上げるため、呼び出し側でサイズを気にする必要はない（既定値のまま実行すればよい）。
 
    Gemini（nanobanana）をまず試し、失敗（クォータ・課金未設定・ネットワーク
    エラーなど）した場合は自動的に OpenAI（gpt-image-1）にフォールバックする。

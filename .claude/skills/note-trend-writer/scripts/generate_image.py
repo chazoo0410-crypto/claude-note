@@ -32,6 +32,45 @@ OPENAI_ENDPOINT = "https://api.openai.com/v1/images/generations"
 GEMINI_TIMEOUT = 20
 OPENAI_TIMEOUT = 30
 
+# note.com's standard eyecatch/header image size.
+DEFAULT_WIDTH = 1280
+DEFAULT_HEIGHT = 670
+
+
+def crop_to_size(image_bytes, target_width, target_height):
+    try:
+        from io import BytesIO
+
+        from PIL import Image
+    except ImportError:
+        print(
+            "warning: Pillow not installed, skipping resize/crop "
+            f"(image will keep its original size, not {target_width}x{target_height})",
+            file=sys.stderr,
+        )
+        return image_bytes
+
+    img = Image.open(BytesIO(image_bytes)).convert("RGB")
+    src_ratio = img.width / img.height
+    target_ratio = target_width / target_height
+
+    if src_ratio > target_ratio:
+        scale = target_height / img.height
+    else:
+        scale = target_width / img.width
+    scaled = img.resize(
+        (max(1, round(img.width * scale)), max(1, round(img.height * scale))),
+        Image.LANCZOS,
+    )
+
+    left = (scaled.width - target_width) // 2
+    top = (scaled.height - target_height) // 2
+    cropped = scaled.crop((left, top, left + target_width, top + target_height))
+
+    out = BytesIO()
+    cropped.save(out, format="PNG")
+    return out.getvalue()
+
 
 def read_key(env_name, key_file):
     key = os.environ.get(env_name)
@@ -86,6 +125,8 @@ def main():
     parser.add_argument("--out", required=True, help="Output PNG path")
     parser.add_argument("--gemini-key-file", default=".secrets/gemini_api_key.txt")
     parser.add_argument("--openai-key-file", default=".secrets/openai_api_key.txt")
+    parser.add_argument("--width", type=int, default=DEFAULT_WIDTH)
+    parser.add_argument("--height", type=int, default=DEFAULT_HEIGHT)
     args = parser.parse_args()
 
     out_dir = os.path.dirname(args.out)
@@ -98,6 +139,7 @@ def main():
     if gemini_key:
         try:
             image_bytes = try_gemini(args.prompt, gemini_key)
+            image_bytes = crop_to_size(image_bytes, args.width, args.height)
             with open(args.out, "wb") as f:
                 f.write(image_bytes)
             print(f"saved (gemini): {args.out} ({os.path.getsize(args.out)} bytes)")
@@ -112,6 +154,7 @@ def main():
     if openai_key:
         try:
             image_bytes = try_openai(args.prompt, openai_key)
+            image_bytes = crop_to_size(image_bytes, args.width, args.height)
             with open(args.out, "wb") as f:
                 f.write(image_bytes)
             print(f"saved (openai fallback): {args.out} ({os.path.getsize(args.out)} bytes)")
