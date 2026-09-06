@@ -6,6 +6,13 @@ first. If that fails (quota, billing, network, unsupported state, etc.),
 falls back to OpenAI Whisper (whisper-1), which only accepts a fixed set of
 audio-friendly formats and files up to 25MB.
 
+Long recordings: if ffmpeg is installed and the media is longer than
+--split-minutes (default 30), the audio track is extracted, downmixed to
+16kHz mono and split into chunks, which are transcribed one by one and
+joined back together. Extracting audio also shrinks the payload enough that
+the 25MB Whisper fallback becomes usable for sources that were far too big
+as video. Without ffmpeg the file is sent whole, exactly as before.
+
 This is a verbatim transcription tool: it does not summarize, translate, or
 explain the content. If a --language is given, it is used as a hint for the
 output language (Gemini) / detection language (Whisper); otherwise the
@@ -18,14 +25,20 @@ never commit real key values to the repository.
 
 Usage:
   python transcribe.py --input video.mp4 --out output/transcripts/foo.md
+  python transcribe.py --input long_meeting.mp4 --split-minutes 20
   python transcribe.py --input clip.mp3 --language ja
 """
 
 import argparse
+import glob
 import json
 import mimetypes
 import os
+import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from datetime import datetime
@@ -50,6 +63,15 @@ FILE_ACTIVE_POLL_INTERVAL = 3
 WHISPER_EXTS = {".flac", ".m4a", ".mp3", ".mp4", ".mpeg", ".mpga", ".oga", ".ogg", ".wav", ".webm"}
 WHISPER_MAX_BYTES = 25 * 1024 * 1024
 
+# Speech-friendly audio encodings, smallest first. Every one of these works
+# with ffmpeg's segment muxer and is accepted by both providers; the list is
+# tried in order so a build without libmp3lame/libopus still lands on wav.
+AUDIO_CANDIDATES = [
+    ("mp3", ["-c:a", "libmp3lame", "-b:a", "32k"]),
+    ("ogg", ["-c:a", "libopus", "-b:a", "24k"]),
+    ("wav", ["-c:a", "pcm_s16le"]),
+]
+
 MIME_OVERRIDES = {
     ".mp4": "video/mp4",
     ".mov": "video/quicktime",
@@ -65,6 +87,8 @@ MIME_OVERRIDES = {
     ".flac": "audio/flac",
     ".aac": "audio/aac",
 }
+
+API_ERRORS = (URLError, HTTPError, RuntimeError, KeyError, IndexError, OSError, TimeoutError)
 
 
 def guess_mime(path):
@@ -85,6 +109,15 @@ def read_key(env_name, key_file):
     return None
 
 
+def describe_error(e):
+    return e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else str(e)
+
+
+def format_timestamp(seconds):
+    seconds = int(seconds)
+    return f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
+
+
 def build_prompt(language):
     if language:
         return (
@@ -97,6 +130,99 @@ def build_prompt(language):
         "要約・翻訳・説明を加えず、書き起こしのテキストのみを出力してください。"
         "読みやすい自然な段落・改行に整えてください。"
     )
+
+
+# --------------------------------------------------------------------------
+# Optional ffmpeg-backed preprocessing
+# --------------------------------------------------------------------------
+
+
+def probe_duration_seconds(path):
+    """Media duration in seconds, or None if it cannot be determined."""
+    ffprobe = shutil.which("ffprobe")
+    if ffprobe:
+        cmd = [
+            ffprobe,
+            "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            path,
+        ]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                return float(result.stdout.strip())
+        except (OSError, subprocess.SubprocessError, ValueError):
+            pass
+
+    # Some installs ship ffmpeg without ffprobe; ffmpeg itself reports the
+    # duration on stderr when asked to open a file with no output target.
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        return None
+    try:
+        result = subprocess.run([ffmpeg, "-i", path], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    match = re.search(r"Duration:\s*(\d+):(\d\d):(\d\d(?:\.\d+)?)", result.stderr)
+    if not match:
+        return None
+    hours, minutes, seconds = match.groups()
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+
+
+def run_ffmpeg(args, timeout):
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.SubprocessError) as e:
+        return False, str(e)
+    return result.returncode == 0, result.stderr.strip()
+
+
+def extract_audio(path, out_dir, timeout):
+    """Extract a single compressed speech-quality audio file. None on failure."""
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        return None
+    for ext, codec_args in AUDIO_CANDIDATES:
+        out_path = os.path.join(out_dir, f"audio.{ext}")
+        args = [ffmpeg, "-v", "error", "-y", "-i", path, "-vn", "-ac", "1", "-ar", "16000"]
+        args += codec_args + [out_path]
+        ok, _ = run_ffmpeg(args, timeout)
+        if ok and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+            return out_path
+        if os.path.exists(out_path):
+            os.remove(out_path)
+    return None
+
+
+def split_audio(path, out_dir, chunk_seconds, timeout):
+    """Extract audio and cut it into chunk_seconds pieces. None on failure."""
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        return None
+    for ext, codec_args in AUDIO_CANDIDATES:
+        pattern = os.path.join(out_dir, f"part_%04d.{ext}")
+        args = [ffmpeg, "-v", "error", "-y", "-i", path, "-vn", "-ac", "1", "-ar", "16000"]
+        args += codec_args
+        args += [
+            "-f", "segment",
+            "-segment_time", str(int(chunk_seconds)),
+            "-reset_timestamps", "1",
+            pattern,
+        ]
+        ok, _ = run_ffmpeg(args, timeout)
+        parts = sorted(glob.glob(os.path.join(out_dir, f"part_*.{ext}")))
+        if ok and parts:
+            return parts
+        for leftover in parts:
+            os.remove(leftover)
+    return None
+
+
+# --------------------------------------------------------------------------
+# Providers
+# --------------------------------------------------------------------------
 
 
 def gemini_upload(path, mime, api_key):
@@ -238,6 +364,76 @@ def transcribe_with_whisper(path, api_key, language, mime):
     return text.strip()
 
 
+# --------------------------------------------------------------------------
+# Orchestration
+# --------------------------------------------------------------------------
+
+
+def transcribe_one(path, args, gemini_key, openai_key, tmp_dir, allow_audio_shrink):
+    """Transcribe one file, Gemini first then Whisper.
+
+    Returns (text, provider_label, errors); text is None when both failed.
+    """
+    errors = []
+    mime = guess_mime(path)
+
+    if gemini_key:
+        try:
+            text = transcribe_with_gemini(path, mime, gemini_key, args.gemini_model, args.language)
+            return text, f"gemini ({args.gemini_model})", errors
+        except API_ERRORS as e:
+            errors.append(f"gemini: {describe_error(e)}")
+    else:
+        errors.append("gemini: no API key found")
+
+    if not openai_key:
+        errors.append("openai: no API key found")
+        return None, None, errors
+
+    ext = os.path.splitext(path)[1].lower()
+    size = os.path.getsize(path)
+
+    # A video that Whisper would reject outright — wrong container, or simply
+    # too big — often fits comfortably once the audio track is pulled out.
+    if allow_audio_shrink and (ext not in WHISPER_EXTS or size > WHISPER_MAX_BYTES):
+        shrunk = extract_audio(path, tmp_dir, args.ffmpeg_timeout)
+        if shrunk:
+            path, ext, mime, size = shrunk, os.path.splitext(shrunk)[1].lower(), guess_mime(shrunk), os.path.getsize(shrunk)
+
+    if ext not in WHISPER_EXTS:
+        errors.append(f"openai: unsupported extension for Whisper API: {ext}")
+    elif size > WHISPER_MAX_BYTES:
+        errors.append(f"openai: file too large for Whisper API (25MB limit, got {size} bytes)")
+    else:
+        try:
+            return transcribe_with_whisper(path, openai_key, args.language, mime), "openai (whisper-1)", errors
+        except API_ERRORS as e:
+            errors.append(f"openai: {describe_error(e)}")
+    return None, None, errors
+
+
+def transcribe_chunks(parts, chunk_seconds, args, gemini_key, openai_key, tmp_dir):
+    """Transcribe each chunk in order. Returns (text, providers, failures)."""
+    texts = []
+    providers = []
+    failures = []
+    for index, part in enumerate(parts):
+        offset = format_timestamp(index * chunk_seconds)
+        text, label, errors = transcribe_one(
+            part, args, gemini_key, openai_key, tmp_dir, allow_audio_shrink=False
+        )
+        if text is None:
+            reason = "; ".join(errors)
+            failures.append(f"chunk {index + 1}/{len(parts)} ({offset}): {reason}")
+            texts.append(f"[!! {offset} からのチャンクの文字起こしに失敗しました: {reason} !!]")
+            print(f"  chunk {index + 1}/{len(parts)} FAILED ({offset})", file=sys.stderr)
+            continue
+        providers.append(label)
+        texts.append(text if args.no_chunk_markers else f"[{offset}]\n\n{text}")
+        print(f"  chunk {index + 1}/{len(parts)} ok ({offset}, {label}, {len(text)} chars)", file=sys.stderr)
+    return "\n\n".join(texts), providers, failures
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Path to the source video/audio file")
@@ -247,6 +443,23 @@ def main():
     parser.add_argument("--gemini-key-file", default=".secrets/gemini_api_key.txt")
     parser.add_argument("--openai-key-file", default=".secrets/openai_api_key.txt")
     parser.add_argument(
+        "--split-minutes",
+        type=float,
+        default=30,
+        help="Split media longer than this into chunks (needs ffmpeg). 0 disables splitting.",
+    )
+    parser.add_argument(
+        "--force-split",
+        action="store_true",
+        help="Split even when the duration cannot be probed (ffprobe missing)",
+    )
+    parser.add_argument(
+        "--no-chunk-markers", action="store_true", help="Do not insert [HH:MM:SS] markers between chunks"
+    )
+    parser.add_argument(
+        "--ffmpeg-timeout", type=int, default=1800, help="Timeout in seconds for each ffmpeg run"
+    )
+    parser.add_argument(
         "--no-header", action="store_true", help="Do not prepend a metadata comment header to --out"
     )
     args = parser.parse_args()
@@ -255,45 +468,58 @@ def main():
         print(f"error: input file not found: {args.input}", file=sys.stderr)
         sys.exit(1)
 
-    mime = guess_mime(args.input)
-    size = os.path.getsize(args.input)
-    errors = []
-    transcript = None
-    provider_label = None
-
     gemini_key = read_key("GEMINI_API_KEY", args.gemini_key_file)
-    if gemini_key:
-        try:
-            transcript = transcribe_with_gemini(args.input, mime, gemini_key, args.gemini_model, args.language)
-            provider_label = f"gemini ({args.gemini_model})"
-        except (URLError, HTTPError, RuntimeError, KeyError, IndexError, OSError, TimeoutError) as e:
-            detail = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else str(e)
-            errors.append(f"gemini: {detail}")
-    else:
-        errors.append("gemini: no API key found")
+    openai_key = read_key("OPENAI_API_KEY", args.openai_key_file)
 
-    if transcript is None:
-        openai_key = read_key("OPENAI_API_KEY", args.openai_key_file)
-        ext = os.path.splitext(args.input)[1].lower()
-        if not openai_key:
-            errors.append("openai: no API key found")
-        elif ext not in WHISPER_EXTS:
-            errors.append(f"openai: unsupported extension for Whisper API: {ext}")
-        elif size > WHISPER_MAX_BYTES:
-            errors.append(f"openai: file too large for Whisper API (25MB limit, got {size} bytes)")
+    duration = probe_duration_seconds(args.input)
+    chunk_seconds = args.split_minutes * 60
+    tmp_dir = tempfile.mkdtemp(prefix="transcribe_")
+
+    try:
+        parts = None
+        if chunk_seconds > 0 and (
+            (duration is not None and duration > chunk_seconds) or (duration is None and args.force_split)
+        ):
+            if not shutil.which("ffmpeg"):
+                print(
+                    "warning: media is longer than --split-minutes but ffmpeg was not found; "
+                    "sending the whole file in one request instead",
+                    file=sys.stderr,
+                )
+            else:
+                length = format_timestamp(duration) if duration else "unknown"
+                print(f"splitting audio ({length}) into {args.split_minutes:g}-minute chunks...", file=sys.stderr)
+                parts = split_audio(args.input, tmp_dir, chunk_seconds, args.ffmpeg_timeout)
+                if not parts:
+                    print(
+                        "warning: ffmpeg could not split the audio; sending the whole file instead",
+                        file=sys.stderr,
+                    )
+
+        failures = []
+        if parts:
+            transcript, providers, failures = transcribe_chunks(
+                parts, chunk_seconds, args, gemini_key, openai_key, tmp_dir
+            )
+            if not providers:
+                print("error: transcription failed on every chunk:", file=sys.stderr)
+                for failure in failures:
+                    print(f"  - {failure}", file=sys.stderr)
+                sys.exit(1)
+            provider_label = ", ".join(sorted(set(providers)))
+            chunk_note = f"{len(parts)} chunks x {args.split_minutes:g}min"
         else:
-            try:
-                transcript = transcribe_with_whisper(args.input, openai_key, args.language, mime)
-                provider_label = "openai (whisper-1)"
-            except (URLError, HTTPError, RuntimeError, KeyError, IndexError, OSError, TimeoutError) as e:
-                detail = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else str(e)
-                errors.append(f"openai: {detail}")
-
-    if transcript is None:
-        print("error: transcription failed on all providers:", file=sys.stderr)
-        for e in errors:
-            print(f"  - {e}", file=sys.stderr)
-        sys.exit(1)
+            transcript, provider_label, errors = transcribe_one(
+                args.input, args, gemini_key, openai_key, tmp_dir, allow_audio_shrink=True
+            )
+            if transcript is None:
+                print("error: transcription failed on all providers:", file=sys.stderr)
+                for e in errors:
+                    print(f"  - {e}", file=sys.stderr)
+                sys.exit(1)
+            chunk_note = None
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     if args.out:
         out_dir = os.path.dirname(args.out)
@@ -301,21 +527,33 @@ def main():
             os.makedirs(out_dir, exist_ok=True)
         content = transcript
         if not args.no_header:
-            generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-            header = (
-                "<!--\n"
-                f"generated_at: {generated_at}\n"
-                f"source: {args.input}\n"
-                f"provider: {provider_label}\n"
-                "-->\n\n"
-            )
-            content = header + transcript
+            header_lines = [
+                "<!--",
+                f"generated_at: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                f"source: {args.input}",
+                f"provider: {provider_label}",
+            ]
+            if duration:
+                header_lines.append(f"duration: {format_timestamp(duration)}")
+            if chunk_note:
+                header_lines.append(f"chunks: {chunk_note}")
+            if failures:
+                header_lines.append(f"partial: yes ({len(failures)} chunk(s) failed)")
+            header_lines += ["-->", "", ""]
+            content = "\n".join(header_lines) + transcript
         with open(args.out, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"saved ({provider_label}): {args.out} ({len(transcript)} chars)")
+        state = "saved (partial)" if failures else "saved"
+        print(f"{state} ({provider_label}): {args.out} ({len(transcript)} chars)")
     else:
         print(f"# provider: {provider_label}\n")
         print(transcript)
+
+    if failures:
+        print(f"warning: {len(failures)} chunk(s) failed and are marked inline:", file=sys.stderr)
+        for failure in failures:
+            print(f"  - {failure}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
