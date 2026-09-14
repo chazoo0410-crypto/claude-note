@@ -1,4 +1,5 @@
 /* muziy — 商品データ
+ * 番号は「イヤリング → イヤーカフ → 刺繍ブレスレット → ビーズブレスレット」の順に振っています。
  * 写真を差し替えるときは image のパスを書き換えてください。
  * image を null にすると、写真ができるまでのあいだ仮のイラストが描かれます。
  * ※ 作品名・価格・サイズは仮の内容です。実際の情報に置き換えてください。
@@ -8,7 +9,7 @@ window.MUZIY_PRODUCTS = [
     no: "01",
     name: "瑠璃",
     reading: "るり",
-    sub: "スクエアボタンのイヤリング",
+    sub: "ネイビーのボタンイヤリング",
     category: "イヤリング・ピアス",
     price: 3200,
     stock: 1,
@@ -27,6 +28,48 @@ window.MUZIY_PRODUCTS = [
   },
   {
     no: "02",
+    name: "水縹",
+    reading: "みずはなだ",
+    sub: "ライトブルーのボタンイヤリング",
+    category: "イヤリング・ピアス",
+    price: 3200,
+    stock: 1,
+    oneOff: true,
+    image: "assets/photos/02-mizuhanada.jpg",
+    kind: "stud",
+    tone: "shell",
+    note: "水色の釉薬のようなヴィンテージボタンに、中央に小さなパールがひと粒。ゴールドの縁が効いて、淡い色でもぼやけません。白いシャツにいちばん似合います。",
+    spec: {
+      "素材": "ヴィンテージボタン（ライトブルー・スクエア）／パール／金属パーツ",
+      "サイズ": "約1.4×1.4cm",
+      "重さ": "片耳 約2.0g",
+      "金具": "樹脂製ノンホールイヤリング（ピアスへの変更可）",
+      "備考": "一点もの。左右で釉薬の流れかたが少し異なります"
+    }
+  },
+  {
+    no: "03",
+    name: "星屑",
+    reading: "ほしくず",
+    sub: "金箔を閉じ込めたレジンのイヤーカフ",
+    category: "イヤーカフ",
+    price: 2800,
+    stock: 1,
+    oneOff: true,
+    image: "assets/photos/03-hoshikuzu.jpg",
+    kind: "hoop",
+    tone: "gold",
+    note: "透明なレジンに金箔とオーロラのフィルムを散らして、耳の縁に沿うかたちに固めました。脇に黒いビーズをひと房。穴がなくても着けられます。",
+    spec: {
+      "素材": "レジン／金箔／オーロラフィルム／ガラスビーズ",
+      "サイズ": "約2.0×1.6cm",
+      "重さ": "約1.8g",
+      "金具": "なし（イヤーカフ・穴不要）",
+      "備考": "一点もの。片耳ぶんです"
+    }
+  },
+  {
+    no: "04",
     name: "夜会",
     reading: "やかい",
     sub: "黒と金糸の刺繍ブレスレット",
@@ -34,7 +77,7 @@ window.MUZIY_PRODUCTS = [
     price: 5800,
     stock: 1,
     oneOff: true,
-    image: "assets/photos/02-yakai.jpg",
+    image: "assets/photos/04-yakai.jpg",
     kind: "band",
     tone: "brass",
     note: "黒地に金と生成りの糸で花を刺した幅広のリボンに、黒チュールと生成りのチュールを二段で重ねました。手首を返すたびにフリルが揺れます。夜の装いに一本だけ。",
@@ -47,7 +90,7 @@ window.MUZIY_PRODUCTS = [
     }
   },
   {
-    no: "03",
+    no: "05",
     name: "孔雀",
     reading: "くじゃく",
     sub: "ターコイズと金の刺繍ブレスレット",
@@ -55,7 +98,7 @@ window.MUZIY_PRODUCTS = [
     price: 6400,
     stock: 1,
     oneOff: true,
-    image: "assets/photos/03-kujaku.jpg",
+    image: "assets/photos/05-kujaku.jpg",
     kind: "band",
     tone: "stone",
     note: "青と金の唐草が流れる刺繍リボンに、黒いヴィンテージバックルを重ねました。下に敷いた金糸のレースが、光を受けると布の奥からうっすら浮かびます。",
@@ -68,7 +111,7 @@ window.MUZIY_PRODUCTS = [
     }
   },
   {
-    no: "04",
+    no: "06",
     name: "薄紅",
     reading: "うすべに",
     sub: "サテンとチュール刺繍のブレスレット",
@@ -76,7 +119,7 @@ window.MUZIY_PRODUCTS = [
     price: 5400,
     stock: 1,
     oneOff: true,
-    image: "assets/photos/04-usubeni.jpg",
+    image: "assets/photos/06-usubeni.jpg",
     kind: "band",
     tone: "pearl",
     note: "つやのあるサテンをたっぷり寄せて、上から花のチュール刺繍を重ねました。境目にパールを一列。やわらかいので、細い手首にもなじみます。",
@@ -89,7 +132,7 @@ window.MUZIY_PRODUCTS = [
     }
   },
   {
-    no: "05",
+    no: "07",
     name: "白花",
     reading: "しらはな",
     sub: "白い花バックルの刺繍ブレスレット",
@@ -97,7 +140,7 @@ window.MUZIY_PRODUCTS = [
     price: 5600,
     stock: 1,
     oneOff: true,
-    image: "assets/photos/05-shirahana.jpg",
+    image: "assets/photos/07-shirahana.jpg",
     kind: "band",
     tone: "resin",
     note: "ブラウンの地に生成りの花が並んだ刺繍リボンへ、乳白色の花型バックルを通しました。落ち着いた色なので、ニットの袖口にも合わせやすい一本です。",
@@ -107,6 +150,69 @@ window.MUZIY_PRODUCTS = [
       "重さ": "約11g",
       "留め具": "バックル通し",
       "備考": "一点もの。バックルに小さな気泡があります"
+    }
+  },
+  {
+    no: "08",
+    name: "万華",
+    reading: "まんげ",
+    sub: "ミルフィオリのビーズブレスレット",
+    category: "ブレスレット",
+    price: 4800,
+    stock: 1,
+    oneOff: true,
+    image: "assets/photos/08-mange.jpg",
+    kind: "band",
+    tone: "stone",
+    note: "小花の模様が入ったミルフィオリガラスに、ピンクの大玉と琥珀色のしずくを混ぜました。並びは一本ずつその場で決めているので、同じ配色にはなりません。",
+    spec: {
+      "素材": "ミルフィオリガラス／ヴィンテージビーズ／パール／ゴールド金具",
+      "サイズ": "内周 約17cm（調整可）",
+      "重さ": "約14g",
+      "留め具": "カニカン＋アジャスターチェーン",
+      "備考": "一点もの。ビーズの並びはお選びいただけません"
+    }
+  },
+  {
+    no: "09",
+    name: "結",
+    reading: "ゆい",
+    sub: "リボンとパールのビーズブレスレット",
+    category: "ブレスレット",
+    price: 4600,
+    stock: 1,
+    oneOff: true,
+    image: "assets/photos/09-yui.jpg",
+    kind: "band",
+    tone: "pearl",
+    note: "透明なリボンのビーズを三つ、パールと小粒のガラスでつなぎました。白とクリアだけで組んでいるので、光の下では輪郭がほどけるように見えます。",
+    spec: {
+      "素材": "ガラスビーズ（リボン・スター）／パール／ゴールド金具",
+      "サイズ": "内周 約17cm（調整可）",
+      "重さ": "約12g",
+      "留め具": "カニカン＋アジャスターチェーン",
+      "備考": "一点もの。リボンのビーズはヴィンテージです"
+    }
+  },
+  {
+    no: "10",
+    name: "琥珀",
+    reading: "こはく",
+    sub: "琥珀色のビーズブレスレット",
+    category: "ブレスレット",
+    price: 5000,
+    stock: 1,
+    oneOff: true,
+    image: "assets/photos/10-kohaku.jpg",
+    kind: "band",
+    tone: "brass",
+    note: "琥珀色のガラスを軸に、黒地に金の花ボタン、大理石のような模様の玉を散らしました。秋から冬の装いに合わせやすい一本です。",
+    spec: {
+      "素材": "ガラスビーズ（アンバー）／ミルフィオリガラス／パール／ヴィンテージボタン",
+      "サイズ": "内周 約17cm（調整可）",
+      "重さ": "約15g",
+      "留め具": "カニカン＋アジャスターチェーン",
+      "備考": "一点もの。中央のボタンはヴィンテージです"
     }
   }
 ];
