@@ -141,7 +141,7 @@ button{font:inherit;color:inherit;}
 .hero{padding-block:clamp(38px,7vw,76px) clamp(30px,5vw,54px);}
 .hero-grid{display:grid;gap:clamp(26px,4vw,48px);}
 @media (min-width:900px){
-  .hero-grid{grid-template-columns:minmax(0,1fr) minmax(0,.82fr);align-items:end;}
+  .hero-grid{grid-template-columns:minmax(0,1fr) minmax(0,.82fr);align-items:center;}
 }
 .hero h1{
   font-family:var(--f-display);
@@ -152,10 +152,32 @@ button{font:inherit;color:inherit;}
   margin:16px 0 0;
   text-wrap:balance;
 }
-.hero h1 em{font-style:italic;color:var(--accent);}
+.hero h1 em{font-style:normal;color:var(--accent);}
 .hero .lede{
-  max-width:34em;color:var(--ink-2);margin:20px 0 0;font-size:14.5px;
+  max-width:34em;color:var(--ink-2);margin:16px 0 0;font-size:14.5px;
 }
+
+/* ---------- 名前の由来（辞書の見出しのような組み） ---------- */
+.entry{
+  margin:26px 0 0;padding:12px 0 14px;max-width:22em;
+  border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 14px;
+  align-items:baseline;
+}
+.entry dt{
+  grid-column:1;
+  font-family:var(--f-jp);font-weight:600;font-size:21px;letter-spacing:.16em;
+  line-height:1.4;margin:0;
+}
+.entry-meta{
+  grid-column:2;margin:0;
+  font-size:10.5px;letter-spacing:.16em;color:var(--ink-2);line-height:1.4;
+}
+.entry-def{
+  grid-column:1 / -1;margin:6px 0 0;
+  font-family:var(--f-jp);font-size:15px;letter-spacing:.12em;color:var(--brass);
+}
+.entry-def::before{content:"＝ ";color:var(--ink-2);}
 .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px;}
 
 .btn{
