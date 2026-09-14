@@ -146,7 +146,7 @@ button{font:inherit;color:inherit;}
 .hero h1{
   font-family:var(--f-display);
   font-weight:400;
-  font-size:clamp(28px,3.6vw,44px);
+  font-size:clamp(28px,3.9vw,48px);
   line-height:1.42;
   letter-spacing:.02em;
   margin:16px 0 0;
@@ -186,6 +186,7 @@ button{font:inherit;color:inherit;}
 .origin-def{
   margin:12px 0 0;font-family:var(--f-jp);font-size:15px;letter-spacing:.1em;color:var(--brass);
 }
+.prose .origin{margin-top:0;margin-bottom:26px;}
 .origin-note{
   margin:9px 0 0;font-size:12.5px;line-height:1.95;color:var(--ink-2);
 }
