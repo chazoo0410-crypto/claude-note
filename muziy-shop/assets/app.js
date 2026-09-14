@@ -223,6 +223,7 @@
 
   function stockTag(p) {
     if (p.stock === 0) return { text: "SOLD OUT", kind: "sold" };
+    if (p.oneOff)      return { text: "一点もの", kind: "last" };
     if (p.stock <= 2)  return { text: `残り${p.stock}点`, kind: "last" };
     return null;
   }
@@ -297,7 +298,8 @@
       `<p class="detail-sub">${p.sub}</p>` +
       `<p class="detail-price">${yen(p.price)}<small>税込・送料別</small></p>` +
       `<p class="stockline"><span class="dot" data-kind="${p.stock === 0 ? "sold" : "ok"}"></span>` +
-      `${p.stock === 0 ? "完売しました（再制作をご希望の方はDMでご相談ください）" : `在庫 ${p.stock}点`}</p>` +
+      `${p.stock === 0 ? "完売しました（似た素材でのお仕立てはDMでご相談ください）"
+        : p.oneOff ? "一点もの・在庫1点" : `在庫 ${p.stock}点`}</p>` +
       `<p class="detail-note">${p.note}</p>`;
     body.append(head);
 
@@ -320,7 +322,7 @@
       const a = document.createElement("a");
       a.className = "btn btn-line btn-block";
       a.href = INSTAGRAM; a.target = "_blank"; a.rel = "noopener";
-      a.textContent = "Instagram で再制作を相談する";
+      a.textContent = "Instagram で似た素材を相談する";
       foot.append(a);
     } else {
       const row = document.createElement("div");

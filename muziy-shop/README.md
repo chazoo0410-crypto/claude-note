@@ -16,15 +16,14 @@ muziy-shop/
 
 ## 商品写真の入れかた
 
-1. 写真を `assets/photos/` に入れます（例 `01.jpg`）。縦長 **4:5**（例 1200×1500px）が最もきれいに収まります。
+1. 写真を `assets/photos/` に入れます。縦長 **4:5**（例 1000×1250px）に切り出しておくと、そのまま収まります。
 2. `assets/products.js` の該当する商品の `image` を書き換えます。
 
 ```js
-image: null,                     // ← 変更前（仮のイラストが表示されます）
-image: "assets/photos/01.jpg",   // ← 変更後（写真が表示されます）
+image: "assets/photos/01-ruri.jpg",
 ```
 
-写真が入るまでは、素材の色にあわせた線画が自動で描かれます。
+`image: null` にすると、写真ができるまでのあいだ、素材の色にあわせた線画が自動で描かれます。
 
 ## 商品の追加・編集
 
@@ -35,9 +34,10 @@ image: "assets/photos/01.jpg",   // ← 変更後（写真が表示されます�
 | `no` | 作品番号（`"09"` のように2桁の文字列） |
 | `name` / `reading` | 作品名と読みがな |
 | `sub` | 一行説明（例「淡水パールのピアス」） |
-| `category` | `ピアス` `イヤリング` `ネックレス` `ブレスレット` `ヘアアクセサリー` のいずれか |
+| `category` | `ブレスレット` `イヤリング・ピアス` のいずれか |
 | `price` | 税込価格（数字のみ） |
 | `stock` | 在庫数。`0` にすると SOLD OUT 表示になります |
+| `oneOff` | `true` にすると「一点もの」と表示されます |
 | `image` | 写真のパス。まだなら `null` |
 | `kind` | 仮イラストの形（`drop` `hoop` `cluster` `stud` `bar` `pendant` `clip` `band`） |
 | `tone` | 仮イラストの色（`pearl` `gold` `brass` `shell` `stone` `resin`） |
