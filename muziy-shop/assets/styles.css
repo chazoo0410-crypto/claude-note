@@ -109,6 +109,10 @@ button{font:inherit;color:inherit;}
 .brand{
   display:flex;align-items:baseline;gap:9px;text-decoration:none;margin-right:auto;
 }
+.brand-mark{
+  width:34px;height:34px;border-radius:50%;flex:none;align-self:center;
+  margin-right:1px;
+}
 .brand b{
   font-family:var(--f-display);font-weight:400;font-size:29px;letter-spacing:.01em;line-height:1;
 }
@@ -157,6 +161,12 @@ button{font:inherit;color:inherit;}
 .hero .lede{
   max-width:34em;color:var(--ink-2);margin:16px 0 0;font-size:14.5px;
 }
+
+.about-mark{
+  width:clamp(104px,13vw,132px);height:auto;border-radius:50%;
+  margin:0 0 22px;
+}
+.foot-mark{width:26px;height:26px;border-radius:50%;flex:none;}
 
 /* ---------- 店名の由来（むじぃ → muziy） ---------- */
 .origin{
@@ -224,6 +234,8 @@ button{font:inherit;color:inherit;}
 
 /* ---------- section frame ---------- */
 .section{padding-block:clamp(40px,6vw,74px);border-top:1px solid var(--rule);}
+/* 固定ヘッダーの下に見出しが隠れないように */
+section[id]{scroll-margin-top:74px;}
 .sec-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:8px;}
 .sec-head h2{
   font-family:var(--f-jp);font-weight:600;font-size:clamp(20px,2.6vw,26px);
