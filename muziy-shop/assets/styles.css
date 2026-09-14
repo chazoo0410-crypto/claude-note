@@ -158,30 +158,36 @@ button{font:inherit;color:inherit;}
   max-width:34em;color:var(--ink-2);margin:16px 0 0;font-size:14.5px;
 }
 
-/* ---------- 名前の由来（辞書の見出しのような組み） ---------- */
-.entry{
-  margin:28px 0 0;padding:13px 0 15px;max-width:25em;
+/* ---------- 店名の由来（むじぃ → muziy） ---------- */
+.origin{
+  margin:28px 0 0;padding:16px 0 17px;max-width:27em;
   border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);
-  display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 14px;
-  align-items:baseline;
 }
-.entry dt{
-  grid-column:1;
-  font-family:var(--f-jp);font-weight:600;font-size:21px;letter-spacing:.16em;
-  line-height:1.4;margin:0;
+.origin-line{
+  margin:0;display:flex;align-items:center;gap:clamp(12px,2.4vw,20px);
 }
-.entry-meta{
-  grid-column:2;margin:0;
-  font-size:10.5px;letter-spacing:.16em;color:var(--ink-2);line-height:1.4;
+.origin-word{
+  font-family:var(--f-jp);font-weight:600;font-size:clamp(21px,2.4vw,25px);
+  letter-spacing:.14em;line-height:1.2;
 }
-.entry-def{
-  grid-column:1 / -1;margin:6px 0 0;
-  font-family:var(--f-jp);font-size:15px;letter-spacing:.12em;color:var(--brass);
+.origin-brand{
+  font-family:var(--f-display);font-size:clamp(28px,3.2vw,34px);
+  letter-spacing:.01em;line-height:1;color:var(--accent);
 }
-.entry-def::before{content:"＝ ";color:var(--ink-2);}
-.entry-note{
-  grid-column:1 / -1;margin:10px 0 0;
-  font-size:12.5px;line-height:1.9;color:var(--ink-2);
+.origin-arrow{
+  flex:none;width:clamp(30px,5vw,54px);height:1px;background:var(--ink-2);
+  position:relative;
+}
+.origin-arrow::after{
+  content:"";position:absolute;right:0;top:-3.5px;
+  border-left:8px solid var(--ink-2);
+  border-top:4px solid transparent;border-bottom:4px solid transparent;
+}
+.origin-def{
+  margin:12px 0 0;font-family:var(--f-jp);font-size:15px;letter-spacing:.1em;color:var(--brass);
+}
+.origin-note{
+  margin:9px 0 0;font-size:12.5px;line-height:1.95;color:var(--ink-2);
 }
 .hero .lede-lead{
   color:var(--ink);font-size:16px;line-height:2.05;margin-top:20px;
